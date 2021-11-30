@@ -19,12 +19,11 @@ package controllers
 import (
 	"context"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,19 +52,26 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Get the resourceclone object
 	clone := &capiv1.ResourceClone{}
-	if err := r.Client.Get(ctx, req.NamespacedName, clone); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, clone); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log = log.WithValues("resourceClone", clone)
-
-	log.Info("Getting cluster and object")
+	log.Info("Getting cluster client", "cluster", clone.Spec.Target.Cluster)
+	/*
 	// Get the cluster secret
 	cluster := &v1.Secret{}
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: clone.Spec.Target.Cluster.Name, Namespace: clone.Spec.Target.Cluster.Namespace}, cluster); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: clone.Spec.Target.Cluster.Name, Namespace: clone.Spec.Target.Cluster.Namespace}, cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+	*/
+
+	// Make client from the cluster secret
+	cluster, err := remote.NewClusterClient(ctx, "", r.Client, client.ObjectKey{Name: clone.Spec.Target.Cluster.Name, Namespace: clone.Spec.Target.Cluster.Namespace})
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	log.Info("Getting source object", "source", clone.Spec.Source)
 	// Get the source object to clone
 	gv, err := schema.ParseGroupVersion(*clone.Spec.Source.APIGroup)
 	if err != nil {
@@ -75,11 +81,24 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	source := &unstructured.Unstructured{}
 	source.SetGroupVersionKind(gv.WithKind(clone.Spec.Source.Kind))
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: clone.Spec.Source.Name, Namespace: req.NamespacedName.Namespace}, source); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: clone.Spec.Source.Name, Namespace: req.NamespacedName.Namespace}, source); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Copying object to target cluster", "source", source, "cluster", cluster)
+	if clone.Spec.Target.Name != "" {
+		log.Info("Setting target name", "name", clone.Spec.Target.Name)
+		source.SetName(clone.Spec.Target.Name)
+	}
+	if clone.Spec.Target.Namespace != "" {
+		log.Info("Setting target name", "name", clone.Spec.Target.Namespace)
+		source.SetNamespace(clone.Spec.Target.Namespace)
+	}
+
+	log.Info("Copying object to target cluster", "object", source)
+	if err := cluster.Create(ctx, source); err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info("Done")
 
 	return ctrl.Result{}, nil
 }
