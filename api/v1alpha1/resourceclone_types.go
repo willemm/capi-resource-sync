@@ -40,9 +40,11 @@ type ResourceCloneTarget struct {
 // ResourceCloneStatus defines the observed state of ResourceClone
 type ResourceCloneStatus struct {
 	// When was this last cloned
-	LastCloneTime *metav1.Time `json:"lastCloneTime,omitempty"`
+	LastUpdated *metav1.Time `json:"lastCloneTime,omitempty"`
 	// Status of cloning operation
 	Status string `json:"status,omitempty"`
+	// Last error that occurred
+	Message string `json:"message,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -88,6 +88,9 @@ spec:
                 description: When was this last cloned
                 format: date-time
                 type: string
+              message:
+                description: Last error that occurred
+                type: string
               status:
                 description: Status of cloning operation
                 type: string
