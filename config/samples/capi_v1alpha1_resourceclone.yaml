@@ -1,0 +1,6 @@
+apiVersion: capi.stater.com/v1alpha1
+kind: ResourceClone
+metadata:
+  name: resourceclone-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,20 @@
+# permissions for end users to view resourceclones.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: resourceclone-viewer-role
+rules:
+- apiGroups:
+  - capi.stater.com
+  resources:
+  - resourceclones
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - capi.stater.com
+  resources:
+  - resourceclones/status
+  verbs:
+  - get

@@ -1,0 +1,16 @@
+domain: stater.com
+layout:
+- go.kubebuilder.io/v3
+projectName: capi-resource-sync
+repo: willemm/capi-resource-sync
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: stater.com
+  group: capi
+  kind: ResourceClone
+  path: willemm/capi-resource-sync/api/v1alpha1
+  version: v1alpha1
+version: "3"
