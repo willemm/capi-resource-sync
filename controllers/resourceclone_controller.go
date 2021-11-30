@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/cluster-api/controllers/remote"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	capiv1 "willemm/capi-resource-sync/api/v1alpha1"
@@ -93,6 +94,17 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Info("Setting target name", "name", clone.Spec.Target.Namespace)
 		source.SetNamespace(clone.Spec.Target.Namespace)
 	}
+	source.SetOwnerReferences(nil)
+	source.SetCreationTimestamp(metav1.Time{})
+	source.SetDeletionTimestamp(nil)
+	source.SetResourceVersion("")
+	source.SetUID("")
+	source.SetSelfLink("")
+	source.SetFinalizers(nil)
+	source.SetGeneration(0)
+	source.SetFinalizers(nil)
+	source.SetManagedFields(nil)
+	unstructured.RemoveNestedField(source.Object, "status")
 
 	log.Info("Copying object to target cluster", "object", source)
 	if err := cluster.Create(ctx, source); err != nil {
