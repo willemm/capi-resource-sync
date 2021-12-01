@@ -104,6 +104,7 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return r.UpdateStatus(ctx, clone, "Failed", "", errors.Wrap(err, "get source object"))
 	}
 
+	version := source.GetResourceVersion()
 	if clone.Spec.Target.Name != "" {
 		log.Info("Setting target name", "name", clone.Spec.Target.Name)
 		source.SetName(clone.Spec.Target.Name)
@@ -125,7 +126,6 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	unstructured.RemoveNestedField(source.Object, "status")
 
 	// Set sourcerevision on target as annotation
-	version := source.GetResourceVersion()
 	annotations := source.GetAnnotations()
 	annotations[AnnotationVersion] = version
 	if SourceCluster != "" {
@@ -159,7 +159,7 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// Don't update if not changed
 		targetAnnotations := target.GetAnnotations()
 		if version == targetAnnotations[AnnotationVersion] {
-			log.Info("Source not changed, done")
+			log.Info("Source not changed, done", "resourceVersion", version, "targetAnnotations", targetAnnotations)
 			return ctrl.Result{}, nil
 		}
 		log.Info("Updating object on target cluster", "object", source)
