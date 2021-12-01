@@ -127,6 +127,9 @@ func (r *ResourceCloneReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Set sourcerevision on target as annotation
 	annotations := source.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
 	annotations[AnnotationVersion] = version
 	if SourceCluster != "" {
 		annotations[AnnotationCluster] = SourceCluster

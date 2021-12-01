@@ -16,7 +16,26 @@ spec:
     singular: resourceclone
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Resource Age
+      jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - description: Clone Status
+      jsonPath: .status.status
+      name: STATUS
+      type: string
+    - description: Target Cluster
+      jsonPath: .spec.target.cluster.name
+      name: CLUSTER
+      priority: 1
+      type: string
+    - description: Update Timestamp
+      jsonPath: .status.lastUpdated
+      name: UPDATED
+      priority: 1
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ResourceClone is the Schema for the resourceclones API
@@ -84,7 +103,7 @@ spec:
           status:
             description: ResourceCloneStatus defines the observed state of ResourceClone
             properties:
-              lastCloneTime:
+              lastUpdated:
                 description: When was this last cloned
                 format: date-time
                 type: string
